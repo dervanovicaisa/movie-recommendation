@@ -10,22 +10,24 @@
 
     <title>{{ config('app.name', 'Movie Recommendation') }}</title>
 
-    <!-- Scripts -->
-    <script src="{{ asset('js/app.js') }}" defer></script>
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css?family=Nunito" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:400,500,600,700&display=swap" rel="stylesheet">
 
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
-    <link href="{{ asset('assets/css/login.css') }}" rel="stylesheet">
+
+    <!-- Scripts -->
+    <script src="{{ asset('js/app.js') }}" defer></script>
 </head>
 
-<body>
+<body class="bg-gray-50">
     <div id="app">
-        <main class="py-4">
+        @include('layouts.navigation')
+        <main class="min-h-screen">
             @yield('content')
         </main>
+        @include('layouts.footer')
     </div>
 </body>
 

@@ -43,6 +43,7 @@ class User extends Authenticatable
 
     public function watchlist()
     {
-        $this->hasOne(MovieType::class, 'id');
+        // A user can have many watchlist entries
+        return $this->hasMany(\App\Models\Watchlist::class, 'user_id');
     }
 }

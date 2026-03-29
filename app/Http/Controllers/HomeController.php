@@ -5,12 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use GuzzleHttp;
 use GuzzleHttp\Client;
-use App\Models\MovieType;
 use App\Models\User;
 use App\Models\Watchlist;
 use Illuminate\Support\Facades\Auth;
-
-use function PHPUnit\Framework\isEmpty;
 
 class HomeController extends Controller
 {
@@ -30,7 +27,6 @@ class HomeController extends Controller
      */
     public function index(Request $request)
     {
-
         $watchlists = Watchlist::where('user_id', Auth::id())->get();
         $moviesNeighbors = HomeController::exploreMovie();
         $user = $movies_alike = "";
@@ -43,24 +39,54 @@ class HomeController extends Controller
             }
         }
 
-        $client = new Client();
+        $client = new Client(['timeout' => 5]);
         $keyword = $request->keyword;
-        if (!empty($keyword)) {
-            $res = $client->get('http://api.tvmaze.com/search/shows?q=' . $keyword);
-            $movies = json_decode($res->getBody());
-        } else {
-            $res = $client->get('http://api.tvmaze.com/shows');
+        $page = $request->page ?? 1;
+        try {
+            if (!empty($keyword)) {
+                $res = $client->get('http://api.tvmaze.com/search/shows?q=' . urlencode($keyword) . '&page=' . $page);
+                $movies = json_decode($res->getBody());
+            } else {
+                $res = $client->get('http://api.tvmaze.com/shows?page=' . $page);
+                $movies = json_decode($res->getBody());
+            }
+        } catch (\Throwable $e) {
+            $movies = [];
         }
-        $movies = json_decode($res->getBody());
-        return view("site.index", compact('movies', 'watchlists', 'user', 'movies_alike'));
+        return view("site.index", compact('movies', 'watchlists', 'user', 'movies_alike', 'page'));
+    }
+
+    public function getMovies(Request $request)
+    {
+        $client = new Client(['timeout' => 5]);
+        $page = $request->page ?? 1;
+        $keyword = $request->keyword;
+        
+        try {
+            if (!empty($keyword)) {
+                $res = $client->get('http://api.tvmaze.com/search/shows?q=' . urlencode($keyword) . '&page=' . $page);
+                $movies = json_decode($res->getBody());
+            } else {
+                $res = $client->get('http://api.tvmaze.com/shows?page=' . $page);
+                $movies = json_decode($res->getBody());
+            }
+        } catch (\Throwable $e) {
+            $movies = [];
+        }
+
+        return response()->json($movies);
     }
 
     public function search(Request $request)
     {
         $search = $request->search_keyword;
-        $client = new Client();
-        $res = $client->get('http://api.tvmaze.com/search/shows?q=' . $search);
-        $movie_search = json_decode($res->getBody());
+        $client = new Client(['timeout' => 5]);
+        try {
+            $res = $client->get('http://api.tvmaze.com/search/shows?q=' . urlencode($search));
+            $movie_search = json_decode($res->getBody());
+        } catch (\Throwable $e) {
+            $movie_search = [];
+        }
         return view("search", compact('movie_search'));
     }
 
@@ -84,5 +110,11 @@ class HomeController extends Controller
         //  u helepers.php se nalazi metoda getNeighbors
         return getNeighbors($movie[0], $movies, $k);
     }
+
+    public function watchlist()
+    {
+        $watchlists = Watchlist::where('user_id', Auth::id())->paginate(12);
+        return view('site.watchlist', compact('watchlists'));
+    }
 }
-// 
+ 

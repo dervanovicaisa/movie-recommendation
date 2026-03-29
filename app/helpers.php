@@ -36,39 +36,65 @@ class Similarity
         ksort($a);
         ksort($b);
         // dd(self::dot_product($a, $b), self::magnitude($a), self::magnitude($b));
-        return self::dot_product($a, $b) / (self::magnitude($a) * self::magnitude($b));
+        $magA = self::magnitude($a);
+        $magB = self::magnitude($b);
+        if ($magA == 0 || $magB == 0) {
+            return 0.0;
+        }
+        return self::dot_product($a, $b) / ($magA * $magB);
     }
 }
 
 function computeDistance($a, $b)
 {
-    if (isset($dot)) {
-        for ($i = 0; $i < sizeof($a); $i++) {
-            foreach ($a[$i] as $key => $value) {
-                $dot[$key] = array(Similarity::dot($value));
-            }
-        }
-        foreach ($a as $keyA => $valueA) {
-            foreach ($b as $keyB => $valueB) {
-                for ($i = 0; $i < sizeof($dot); $i++) {
-                    $distance = Similarity::cosine($valueA[$keyA], $valueB[$keyB], $dot[$i][0]);
-                }
-            }
-        }
-        return $distance;
+    // Expect $a and $b to be arrays of movie tag arrays. Compute cosine similarity
+    if (empty($a) || empty($b)) {
+        return null;
     }
+
+    $distances = [];
+    // Normalize inputs: ensure each side is an array of arrays
+    foreach ($a as $vA) {
+        foreach ($b as $vB) {
+            // Similarity::cosine expects arrays of tags and an optional base array
+            // We will compute cosine similarity of tag lists
+            try {
+                $sim = Similarity::cosine((array)$vA, (array)$vB, []);
+            } catch (\Throwable $e) {
+                // On any failure return null for this pair
+                $sim = null;
+            }
+            $distances[] = $sim;
+        }
+    }
+
+    // Return the maximum similarity found (neighbors use highest similarity)
+    if (empty($distances)) {
+        return null;
+    }
+    return max($distances);
 }
 
 function getNeighbors($movieUserID, $movieUsers, $k)
 {
-    $distances = [];
+    // Build list of [movie, similarity] and sort by similarity desc
+    $results = [];
     foreach ($movieUsers as $movie) {
-        $dist = computeDistance($movieUserID, $movie);
-        $distances[] = [$movie, $dist];
+        $sim = computeDistance($movieUserID, $movie);
+        if ($sim === null) {
+            continue;
+        }
+        $results[] = ['movie' => $movie, 'sim' => $sim];
     }
+
+    usort($results, function ($a, $b) {
+        return $b['sim'] <=> $a['sim'];
+    });
+
     $neighbors = [];
-    for ($i = 0; $i < $k; $i++) {
-        $neighbors[] = $distances[$i][0];
+    $count = min($k, count($results));
+    for ($i = 0; $i < $count; $i++) {
+        $neighbors[] = $results[$i]['movie'];
     }
     return $neighbors;
 }

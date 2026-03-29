@@ -4,39 +4,15 @@ namespace App\Http\Controllers;
 
 use GuzzleHttp;
 use Illuminate\Http\Request;
-use App\Models\Movie;
-use App\Models\MovieGenres;
 use App\Models\User;
 use App\Models\Watchlist;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use phpDocumentor\Reflection\Types\Float_;
-use Similarity;
 
 class MovieController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
     /**
      * Store a newly created resource in storage.
      *
@@ -45,31 +21,51 @@ class MovieController extends Controller
      */
     public function store(Request $request)
     {
-        
+        // Use authenticated user rather than trusting user_id from the request
         $validator = Validator::make($request->all(), [
-            'user_id' => 'required',
-            'movie_name' => 'required',
+            'movie_name' => 'required|string|max:255',
             'movie_genre' => 'required',
-            'score' => 'required'
+            'score' => 'required|numeric|min:0|max:10',
+            'movie_img_url' => 'nullable|url',
+            'movieID' => 'nullable'
         ]);
-        // dd($request->score);
+
         if ($validator->fails()) {
             return redirect()->back()
-            ->withErrors($validator)
-            ->withInput();
-        } else {
-            $watchlist = new Watchlist();
-            $watchlist->movie_name = $request->movie_name;
-            $watchlist->cover_photo = $request->movie_img_url;
-            $watchlist->user_id = $request->user_id;
-            $watchlist->rating = $request->score;
-            foreach ($request->movie_genre as $genrerequest) {
-                $watchlist->genre =  $genrerequest;
-            }
-            $watchlist->movie_id = $request->movieID;
-            $watchlist->save();
-            return redirect()->back()->with('success', 'Successfully added movie in your watchlist!');
+                ->withErrors($validator)
+                ->withInput();
         }
+
+        $watchlist = new Watchlist();
+        $watchlist->movie_name = $request->movie_name;
+        $watchlist->cover_photo = $request->movie_img_url ?? null;
+        $watchlist->user_id = Auth::id();
+        $watchlist->rating = $request->score;
+
+        // movie_genre may be an array from the client; store as a comma-separated string for now
+        if (is_array($request->movie_genre)) {
+            $watchlist->genre = implode(',', $request->movie_genre);
+        } else {
+            $watchlist->genre = $request->movie_genre;
+        }
+
+        $watchlist->movie_id = $request->movieID ?? null;
+
+        try {
+            $watchlist->save();
+        } catch (\Throwable $e) {
+            // Log exception in real app; return a friendly message here
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['message' => 'Failed to add movie to watchlist.'], 500);
+            }
+            return redirect()->back()->with('error', 'Failed to add movie to watchlist.');
+        }
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json(['message' => 'Successfully added movie to watchlist.']);
+        }
+
+        return redirect()->back()->with('success', 'Successfully added movie in your watchlist!');
     }
     
     /**
@@ -81,44 +77,14 @@ class MovieController extends Controller
     public function show($id)
     {
         //
-        $client = new Client();
-        $res = $client->get('http://api.tvmaze.com/shows/' . $id);
-        $movie_details = json_decode($res->getBody());
+        $client = new Client(['timeout' => 5]);
+        try {
+            $res = $client->get('http://api.tvmaze.com/shows/' . (int)$id);
+            $movie_details = json_decode($res->getBody());
+        } catch (\Throwable $e) {
+            // On error, show a friendly message or fallback view
+            $movie_details = null;
+        }
         return view('site.movie_details', compact('movie_details'));
     }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
-    }
-
 }

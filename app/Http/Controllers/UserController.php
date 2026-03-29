@@ -21,59 +21,22 @@ class UserController extends Controller
         return view('site.profile.profile', compact('user','watchlists'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
+    public function apiWatchlist(Request $request)
     {
-        //
+        $watchlists = Watchlist::where('user_id', Auth::id())->orderBy('id', 'DESC')->get();
+        return response()->json($watchlists);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
+    public function destroyWatchlistEntry($id)
     {
-        //
-    }
+        $item = Watchlist::where('id', $id)->where('user_id', Auth::id())->first();
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
+        if (!$item) {
+            return response()->json(['message' => 'Watchlist item not found'], 404);
+        }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
+        $item->delete();
+        return response()->json(['message' => 'Item removed from watchlist']);
     }
 
     /**
