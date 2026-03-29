@@ -32,21 +32,30 @@ axios.interceptors.response.use(
 );
 
 function AppContent() {
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(() => {
+        try {
+            const saved = localStorage.getItem('movieflix_user');
+            return saved ? JSON.parse(saved) : null;
+        } catch {
+            return null;
+        }
+    });
     const [watchlist, setWatchlist] = useState([]);
     const [toast, setToast] = useState(null);
     const [authChecked, setAuthChecked] = useState(false);
 
-    // Check if user is already authenticated on mount
+    // Check if user is already authenticated on mount with session check
     useEffect(() => {
         const checkAuth = async () => {
             try {
                 const { data } = await axios.get('/api/user');
                 setUser(data);
+                localStorage.setItem('movieflix_user', JSON.stringify(data));
                 await loadWatchlist();
             } catch (error) {
                 // User is not authenticated
                 setUser(null);
+                localStorage.removeItem('movieflix_user');
             } finally {
                 setAuthChecked(true);
             }
@@ -66,12 +75,14 @@ function AppContent() {
 
     const handleLoginSuccess = (userData) => {
         setUser(userData);
+        localStorage.setItem('movieflix_user', JSON.stringify(userData));
         loadWatchlist();
         showToast('Welcome back!', 'success');
     };
 
     const handleSignupSuccess = (userData) => {
         setUser(userData);
+        localStorage.setItem('movieflix_user', JSON.stringify(userData));
         loadWatchlist();
         showToast('Account created successfully!', 'success');
     };
@@ -81,6 +92,7 @@ function AppContent() {
             await axios.post('/api/logout', {});
             setUser(null);
             setWatchlist([]);
+            localStorage.removeItem('movieflix_user');
             showToast('Logged out successfully', 'success');
         } catch (error) {
             showToast('Logout failed', 'error');
