@@ -1,5 +1,6 @@
-# movie-app
-movie recommendation
+# Movie Recommendation — Version 2 (React)
+
+Full-stack aplikacija za otkrivanje serija i filmova, upravljanje ličnom listom za gledanje i dobijanje preporuka. Ova grana uvodi odvojeni React klijent koji koristi Laravel API.
 
 ## What It Does
 
@@ -27,6 +28,20 @@ This project now follows a split architecture:
   - Frontend calls `/api/*` endpoints
   - Handles search, infinite pages, watchlist management, toasts
 
+## Project structure
+
+```text
+movie-recommendation/
+├── app/                 Laravel controllers, models and middleware
+├── routes/              web and API endpoints
+├── database/            migrations, factories and seeders
+├── config/              Laravel, session and CORS configuration
+└── frontend/            independent React application
+    └── src/components/  page and UI components
+```
+
+Komunikacija između aplikacija ide HTTP/JSON putem `/api/*` ruta. React koristi Axios, a Laravel obavlja autentifikaciju, autorizaciju, pristup bazi i integraciju sa TVMaze servisom. Za prijavljene korisnike React pri pokretanju traži Sanctum CSRF kolačić; CORS dozvoljene origin-e treba postaviti kroz `CORS_ALLOWED_ORIGINS`.
+
 ## Run backend
 
 1. `composer install`
@@ -42,6 +57,12 @@ This project now follows a split architecture:
 3. `npm start`
 
 React app uses `REACT_APP_API_BASE_URL` (default `''`) for dropped-in proxying to the same domain. For cross-origin, set the URL.
+
+## Required environment settings
+
+- Laravel `.env`: podesite `DB_*` vrijednosti za bazu podataka.
+- Laravel `.env`: za lokalni React klijent podesite, po potrebi, `CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000`.
+- `frontend/.env`: postavite `REACT_APP_API_BASE_URL=http://127.0.0.1:8000` kada frontend i backend rade na različitim portovima.
 
 ### Local backend API Base URL (dev)
 
