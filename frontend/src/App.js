@@ -15,7 +15,13 @@ import Profile from './components/Profile';
 
 // Configure axios
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = process.env.REACT_APP_API_BASE_URL || 'http://127.0.0.1:8000';
+axios.defaults.headers.common['Accept'] = 'application/json';
+axios.defaults.baseURL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+
+// Get CSRF token on app initialization
+axios.get('/sanctum/csrf-cookie').catch(() => {
+    // CSRF cookie endpoint might not exist or fail - that's okay
+});
 
 // Add response interceptor for 401 errors
 let navigationRef = null;

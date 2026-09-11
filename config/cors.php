@@ -19,7 +19,9 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:8080'],
+    // Use .env to avoid hardcoding origins. For credentialed requests, do not use '*'.
+    // Example: CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+    'allowed_origins' => array_filter(array_map('trim', explode(',', env('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000')))),
 
     'allowed_origins_patterns' => [],
 
@@ -29,6 +31,6 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => true,
+    'supports_credentials' => env('CORS_SUPPORTS_CREDENTIALS', true),
 
 ];
