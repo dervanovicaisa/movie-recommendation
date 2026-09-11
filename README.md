@@ -1,105 +1,95 @@
 # Movie Recommendation — Version 2 (React)
 
-Full-stack aplikacija za otkrivanje serija i filmova, upravljanje ličnom listom za gledanje i dobijanje preporuka. Ova grana uvodi odvojeni React klijent koji koristi Laravel API.
+A full-stack application for discovering movies and TV shows, maintaining a personal watchlist, and receiving recommendations. This branch introduces a separate React client that consumes a Laravel API.
 
-## What It Does
+## Features
 
-This is a web application for movie and TV show recommendations, built with a split architecture: Laravel backend API + React frontend.
+- Browse movies and TV shows provided by the TVMaze API
+- Search and infinite scrolling
+- User registration and login
+- Add and remove items from a personal watchlist
+- Collaborative recommendations based on other users' watchlists
+- Profile page with user information and watchlist summary
 
-- **Movie Discovery**: Fetches and displays movies/TV shows from the TVMaze API, with search and infinite scroll.
-- **User Authentication**: Laravel handles user login/registration.
-- **Watchlist Management**: Users can add/remove movies to/from their personal watchlist.
-- **Recommendations**: Shows movies based on other users' watchlists (collaborative filtering via PHP-ML).
-- **Profile View**: Displays user info and watchlist count.
+## Architecture
 
-## Architecture: BE/API + React FE
+The application uses a split frontend/backend design:
 
-This project now follows a split architecture:
+```text
+React client (frontend/)
+  -> Axios requests over HTTP/JSON
+    -> Laravel API (routes/api.php)
+      -> controllers and Eloquent models
+        -> relational database and TVMaze API
+```
 
-- Laravel backend in the project root
-  - API routes in `routes/api.php`
-  - `HomeController@getMovies` fetches TVMaze and returns JSON
-  - `MovieController@store` creates watchlist entries with JSON support
-  - `UserController@apiWatchlist` and `destroyWatchlistEntry` manage watchlist
-  - CORS is enabled for `api/*` in `config/cors.php`
+- The Laravel backend lives in the repository root.
+  - `routes/api.php` defines API endpoints.
+  - Controllers retrieve TVMaze data, authenticate users, and manage watchlists and recommendations.
+  - CORS settings are configured in `config/cors.php`.
+- The React client lives in `frontend/`.
+  - `src/App.js` configures Axios, routes, and authentication handling.
+  - `src/components/` contains the UI pages and reusable components.
+  - The client manages search, infinite scrolling, watchlists, and toast messages.
 
-- React frontend in `frontend/`
-  - `npm install` + `npm start` runs dev server
-  - Frontend calls `/api/*` endpoints
-  - Handles search, infinite pages, watchlist management, toasts
-
-## Project structure
+## Project Structure
 
 ```text
 movie-recommendation/
-├── app/                 Laravel controllers, models and middleware
-├── routes/              web and API endpoints
-├── database/            migrations, factories and seeders
-├── config/              Laravel, session and CORS configuration
-└── frontend/            independent React application
-    └── src/components/  page and UI components
+├── app/                 Laravel controllers, models, and middleware
+├── routes/              Web and API endpoints
+├── database/            Migrations, factories, and seeders
+├── config/              Laravel, session, and CORS configuration
+└── frontend/            Independent React application
+    └── src/components/  Page and UI components
 ```
 
-Komunikacija između aplikacija ide HTTP/JSON putem `/api/*` ruta. React koristi Axios, a Laravel obavlja autentifikaciju, autorizaciju, pristup bazi i integraciju sa TVMaze servisom. Za prijavljene korisnike React pri pokretanju traži Sanctum CSRF kolačić; CORS dozvoljene origin-e treba postaviti kroz `CORS_ALLOWED_ORIGINS`.
+React communicates with Laravel through `/api/*` endpoints using JSON. Laravel handles authentication, authorization, database access, and the TVMaze integration. On startup, React requests a Sanctum CSRF cookie for authenticated requests. Configure allowed cross-origin clients with `CORS_ALLOWED_ORIGINS`.
 
-## Run backend
+## Technology
 
-1. `composer install`
-2. `.env` DB setup
-3. `php artisan key:generate`
-4. `php artisan migrate --seed`
-5. `php artisan serve`
+- Laravel 8 and PHP
+- React and Axios
+- MySQL or another Laravel-supported database
+- TVMaze API
+- Tailwind CSS UI components
 
-## Run frontend
+## Run the Backend
 
-1. `cd frontend`
-2. `npm install`
-3. `npm start`
+1. Run `composer install`.
+2. Copy `.env.example` to `.env` and configure the database.
+3. Run `php artisan key:generate`.
+4. Run `php artisan migrate --seed`.
+5. Start Laravel with `php artisan serve`.
 
-React app uses `REACT_APP_API_BASE_URL` (default `''`) for dropped-in proxying to the same domain. For cross-origin, set the URL.
+## Run the Frontend
 
-## Required environment settings
+1. Change to the frontend directory: `cd frontend`.
+2. Install dependencies: `npm install`.
+3. Start the development server: `npm start`.
 
-- Laravel `.env`: podesite `DB_*` vrijednosti za bazu podataka.
-- Laravel `.env`: za lokalni React klijent podesite, po potrebi, `CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000`.
-- `frontend/.env`: postavite `REACT_APP_API_BASE_URL=http://127.0.0.1:8000` kada frontend i backend rade na različitim portovima.
+Set `REACT_APP_API_BASE_URL` in `frontend/.env` when the frontend and backend run on different origins. For a local Laravel server, use:
 
-### Local backend API Base URL (dev)
+```env
+REACT_APP_API_BASE_URL=http://127.0.0.1:8000
+```
 
-Create `frontend/.env` with:
+## Required Environment Settings
 
-- `REACT_APP_API_BASE_URL=http://127.0.0.1:8000`
+- In Laravel `.env`, configure the `DB_*` variables for the database.
+- For a local React client, optionally set `CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000` in Laravel `.env`.
+- In `frontend/.env`, set `REACT_APP_API_BASE_URL` to the Laravel server URL when needed.
 
-This makes the frontend call your locally running Laravel backend on port 8000.
+## Docker
 
-### Docker backend API Base URL (container)
+Start the full stack with:
 
-In `docker-compose.yml`, `frontend.environment` already sets:
+```bash
+docker compose up --build
+```
 
-- `REACT_APP_API_BASE_URL=http://backend:8000`
+The backend is available at `http://localhost:8000` and the frontend at `http://localhost:3000`. Stop the containers with `docker compose down`.
 
-## Windows notes (PowerShell)
+## Windows Notes
 
-- Run `npm` using `npm.cmd` if `npm.ps1` is blocked:
-  - `npm.cmd install`
-  - `npm.cmd start`
-- If `spawn` errors appear, use `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` in an elevated PowerShell.
-- If using PHP 8.4, apply:
-  - `composer update --no-interaction`
-  - `composer dump-autoload`
-  - `php artisan migrate --seed`
-  - `php artisan serve --host=127.0.0.1 --port=8000`
-
-## Run with Docker Compose
-
-1. `docker compose up --build`
-2. Backend: `http://localhost:8000`
-3. Frontend: `http://localhost:3000`
-
-Docker config:
-- `docker-compose.yml`: mysql + laravel + react services
-- `Dockerfile`: php-fpm image with composer + node
-- `.env.docker`: Laravel config for containers
-
-Use `docker compose down` to stop and remove containers.
- 
+If PowerShell blocks `npm.ps1`, run `npm.cmd install` and `npm.cmd start` instead.
