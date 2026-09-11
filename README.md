@@ -1,50 +1,50 @@
 # Movie Recommendation
 
-Prvobitna, server-rendered verzija aplikacije za pronalazak i čuvanje filmskih preporuka. Aplikacija je izrađena u Laravelu i koristi klasične Blade prikaze i Laravelovu autentifikaciju; ova grana namjerno ne sadrži React klijent.
+The original server-rendered version of a movie discovery and recommendation application. It is built with Laravel, traditional Blade views, and Laravel authentication. This branch intentionally has no React client.
 
-## Funkcionalnosti
+## Features
 
-- registracija, prijava i odjava korisnika
-- pregled i pretraga filmova
-- dodavanje filmova na ličnu listu za gledanje
-- pregled profila i brisanje stavki s liste
-- preporuke zasnovane na korisničkim listama za gledanje
+- User registration, login, and logout
+- Browse and search movies
+- Add movies to a personal watchlist
+- View a user profile and remove watchlist entries
+- Recommendations based on users' watchlists
 
-## Arhitektura
+## Architecture
 
 ```text
-Pregledač
-  -> Laravel web rute (routes/web.php)
-    -> kontroleri (app/Http/Controllers)
-      -> modeli Eloquent (User, Watchlist)
-        -> relaciona baza podataka
+Browser
+  -> Laravel web routes (routes/web.php)
+    -> controllers (app/Http/Controllers)
+      -> Eloquent models (User, Watchlist)
+        -> relational database
 ```
 
-- `routes/web.php` definiše web rute i autentifikaciju.
-- `HomeController` prikazuje početnu stranicu i pretragu.
-- `MovieController` upravlja filmovima, listom za gledanje i istraživanjem preporuka.
-- `UserController` prikazuje profil korisnika i uklanja stavke iz liste.
-- `app/Models/Watchlist.php` predstavlja vezu korisnika i sačuvanih filmova.
-- `database/migrations/` sadrži šemu baze, a `database/seeders/` početne podatke.
+- `routes/web.php` defines the web routes and authentication endpoints.
+- `HomeController` renders the home page and search results.
+- `MovieController` manages movies, watchlists, and recommendation exploration.
+- `UserController` renders the user profile and removes watchlist entries.
+- `app/Models/Watchlist.php` represents the relationship between a user and saved movies.
+- `database/migrations/` contains the database schema; `database/seeders/` contains initial data.
 
-## Tehnologije
+## Technology
 
 - PHP 7.3+ / PHP 8+
 - Laravel 8
-- MySQL ili druga Laravelom podržana baza
-- Blade i Laravel UI autentifikacija
+- MySQL or another Laravel-supported database
+- Blade and Laravel UI authentication
 
-## Lokalno pokretanje
+## Run Locally
 
-1. Instalirajte PHP, Composer i bazu podataka.
-2. Pokrenite `composer install`.
-3. Kopirajte `.env.example` u `.env` i unesite parametre baze podataka.
-4. Pokrenite `php artisan key:generate`.
-5. Kreirajte tabele i početne podatke komandom `php artisan migrate --seed`.
-6. Pokrenite aplikaciju: `php artisan serve`.
-7. Otvorite adresu koju ispiše Laravel, uobičajeno `http://127.0.0.1:8000`.
+1. Install PHP, Composer, and a database server.
+2. Run `composer install`.
+3. Copy `.env.example` to `.env` and configure the database settings.
+4. Run `php artisan key:generate`.
+5. Create the database tables and seed initial data with `php artisan migrate --seed`.
+6. Start the application with `php artisan serve`.
+7. Open the URL shown by Laravel, usually `http://127.0.0.1:8000`.
 
-## Grane
+## Branches
 
-- `main` — ova prvobitna Laravel verzija, bez Reacta.
-- `version-2-react` — nova verzija sa Laravel API-jem i odvojenim React klijentom. Uputstva za nju nalaze se u README-u te grane.
+- `main` — this original Laravel application, without React.
+- `version-2-react` — the updated version with a Laravel API and a separate React client. See that branch's README for its setup instructions.
